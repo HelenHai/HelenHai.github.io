@@ -1,0 +1,988 @@
+<!doctype html>
+
+
+
+
+<html class="theme-next mist" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Lobster Two:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="browser,">
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.1">
+
+
+
+
+
+
+<meta name="description" content="摘要 本文主要是通过8个方面来讲解浏览器到底是如何工作的。学习浏览器工作原理时最好有编译原理的基础，这样有助于你更好的理解浏览器是如何解析页面中的代码的。此外，在学习过程中你将会了解到什么时候呈现树，如何实现DOM树构建，浏览器是如何实现页面布局的，以及如何处理js等  在 IE 占据 90% 市场份额的年代，我们除了把浏览器当成一个“黑箱”，什么也做不了。但是现在，开放源代码的浏览器拥有了过半的">
+<meta name="keywords" content="browser">
+<meta property="og:type" content="article">
+<meta property="og:title" content="浏览器工作原理">
+<meta property="og:url" content="http://yoursite.com/2017/05/26/浏览器相关/how_browsers_work/index.html">
+<meta property="og:site_name" content="Helen&#39;s Blog">
+<meta property="og:description" content="摘要 本文主要是通过8个方面来讲解浏览器到底是如何工作的。学习浏览器工作原理时最好有编译原理的基础，这样有助于你更好的理解浏览器是如何解析页面中的代码的。此外，在学习过程中你将会了解到什么时候呈现树，如何实现DOM树构建，浏览器是如何实现页面布局的，以及如何处理js等  在 IE 占据 90% 市场份额的年代，我们除了把浏览器当成一个“黑箱”，什么也做不了。但是现在，开放源代码的浏览器拥有了过半的">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/2017/05/26/浏览器相关/how_browsers_work/layers.png">
+<meta property="og:image" content="http://yoursite.com/2017/05/26/浏览器相关/how_browsers_work/flow.png">
+<meta property="og:image" content="http://yoursite.com/2017/05/26/浏览器相关/how_browsers_work/webkitflow.png">
+<meta property="og:image" content="http://yoursite.com/2017/05/26/浏览器相关/how_browsers_work/parseTree.png">
+<meta property="og:image" content="http://yoursite.com/2017/05/26/浏览器相关/how_browsers_work/parseProcess.png">
+<meta property="og:image" content="http://yoursite.com/2017/05/26/浏览器相关/how_browsers_work/domTree.png">
+<meta property="og:image" content="http://yoursite.com/2017/05/26/浏览器相关/how_browsers_work/parseHTML.png">
+<meta property="og:image" content="http://yoursite.com/2017/05/26/浏览器相关/how_browsers_work/treeConstruction.gif">
+<meta property="og:image" content="http://yoursite.com/2017/05/26/浏览器相关/how_browsers_work/render_DOM_tree.png">
+<meta property="og:image" content="http://yoursite.com/2017/05/26/浏览器相关/how_browsers_work/css_div.jpg">
+<meta property="og:updated_time" content="2019-10-19T08:46:05.163Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="浏览器工作原理">
+<meta name="twitter:description" content="摘要 本文主要是通过8个方面来讲解浏览器到底是如何工作的。学习浏览器工作原理时最好有编译原理的基础，这样有助于你更好的理解浏览器是如何解析页面中的代码的。此外，在学习过程中你将会了解到什么时候呈现树，如何实现DOM树构建，浏览器是如何实现页面布局的，以及如何处理js等  在 IE 占据 90% 市场份额的年代，我们除了把浏览器当成一个“黑箱”，什么也做不了。但是现在，开放源代码的浏览器拥有了过半的">
+<meta name="twitter:image" content="http://yoursite.com/2017/05/26/浏览器相关/how_browsers_work/layers.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: false,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/05/26/浏览器相关/how_browsers_work/">
+
+
+
+
+
+  <title>浏览器工作原理 | Helen's Blog</title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?3c99e785d97e7696f0c4cd8af29d657e";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Helen's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/05/26/浏览器相关/how_browsers_work/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Helen">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Helen's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">浏览器工作原理</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-05-26T22:04:03+08:00">
+                2017-05-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/front-end/" itemprop="url" rel="index">
+                    <span itemprop="name">front-end</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+             <span id="/2017/05/26/浏览器相关/how_browsers_work/" class="leancloud_visitors" data-flag-title="浏览器工作原理">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数 </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><!--**<p style="color:#15A05D;display：block"></p>**-->
+<p><strong><p style="color:#15A05D;display：block">本文主要是通过8个方面来讲解浏览器到底是如何工作的。学习浏览器工作原理时最好有编译原理的基础，这样有助于你更好的理解浏览器是如何解析页面中的代码的。此外，在学习过程中你将会了解到什么时候呈现树，如何实现DOM树构建，浏览器是如何实现页面布局的，以及如何处理js等</p></strong></p>
+<blockquote>
+<p>在 IE 占据 90% 市场份额的年代，我们除了把浏览器当成一个“黑箱”，什么也做不了。但是现在，开放源代码的浏览器拥有了过半的市场份额，因此，是时候来揭开神秘的面纱，一探网络浏览器的内幕了。呃，里面只有数以百万行计的 C++ 代码…</p>
+</blockquote>
+<h2 id="简介及浏览器基础知识"><a href="#简介及浏览器基础知识" class="headerlink" title="简介及浏览器基础知识"></a>简介及浏览器基础知识</h2><h3 id="浏览器的高层结构"><a href="#浏览器的高层结构" class="headerlink" title="浏览器的高层结构"></a>浏览器的高层结构</h3><p>浏览器的主要组件有7个，分别为 <code>用户界面</code> , <code>浏览器引擎</code> , <code>呈现引擎</code> , <code>网络</code> , <code>用户界面后端</code> , <code>Javascript解释器</code> , <code>数据储存</code> 。结构图如下如所示：</p>
+<p><img src="/2017/05/26/浏览器相关/how_browsers_work/layers.png" alt><br>(图0-1: 浏览器的主要组件)</p>
+<ul>
+<li><strong><code>用户界面（User Interface）</code></strong> 包括地址栏、前进/后退按钮、书签菜单等。除了浏览器主窗口显示的您的请求外，其他显示的各个部分都属于用户界面。</li>
+<li><strong><code>浏览器引擎（Browser Engine）</code></strong> 在用户界面和和呈现引擎之间传送指令。    </li>
+<li><strong><code>呈现引擎（Rendering Engine）</code></strong> 负责显示请求的内容。如果请求内容是HTML，它就负责解析HTML和CSS内容，并将解析后内容显示在屏幕上。</li>
+<li><strong><code>网络（Networking）</code></strong> 用于网络调用，比如HTTP请求。其接口与平台无关，并为所有平台提供 <code>底层实现</code> 。</li>
+<li><strong><code>用户界面后端（UI Backend）</code></strong> 用于绘制基本的窗口小部件，比如组合框和窗口。其公开了与平台无关的通用接口，而在底层使用操作系统的用户界面方法。</li>
+<li><strong><code>Javascript解释器（Javascript Interpreter）</code></strong> 用于解释和执行javascript代码。</li>
+<li><strong><code>数据存储（Date Persistence）</code></strong> 这是持久层。浏览器需要在硬盘上保存各种数据，例如 <code>Cookie</code> 。 <code>HTML5</code> 定义了 <code>“网络数据库”</code> ，这是一个完整（但是轻便）的浏览器内数据库。</li>
+</ul>
+<h2 id="一、呈现引擎"><a href="#一、呈现引擎" class="headerlink" title="一、呈现引擎"></a>一、呈现引擎</h2><h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><blockquote>
+<p><code>呈现引擎</code> ，顾名思义就是在浏览器上显示用户请求的内容。默认情况下呈现引擎可以显示 <code>HTML</code> , <code>XML</code> 文档与图片。通过插件还可以显示 <code>PDF</code>。</p>
+</blockquote>
+<p>当然呈现引擎很重的作用是： <code>显示使用 CSS 格式化的 HTML 内容和图片</code>。</p>
+<h3 id="主流程（渲染流程）"><a href="#主流程（渲染流程）" class="headerlink" title="主流程（渲染流程）"></a>主流程（渲染流程）</h3><p>呈现引擎一开始会从 <code>网络层</code> 获取请求文档的内容，内容大小一般限制在8000块以内。下图表示呈现引擎的的基本流程</p>
+<p><img src="/2017/05/26/浏览器相关/how_browsers_work/flow.png" alt><br>（图1-1 呈现引擎的的基本流程）<br>先渲染 HTML 文件 <code>构建DOM树</code> ，再渲染 CSS 文件 <code>构建render树</code>，render树构建好之后执行布局过程，它将 <code>确定每个元素的确切坐标</code> ， 再下一步就是 <code>绘制</code> （既遍历render树并根据ui后端层绘制每个节点）。</p>
+<p><strong><p style="color:red;display：block">这是一个渐进过程，为了减少等待时间提升用户体验，呈现引擎力求尽快将内容显示在屏幕上。它在等个 HTML 文档解析完毕之前就会构建呈现树和设置布局。在不断接收和处理来自网络的其余内容的同时，呈现引擎会将部分内容解析并呈现出来。</p></strong></p>
+<p><img src="/2017/05/26/浏览器相关/how_browsers_work/webkitflow.png" alt><br>(图2-1 weikit 主流程示例)</p>
+<hr>
+<h2 id="二、解析和DOM树构建"><a href="#二、解析和DOM树构建" class="headerlink" title="二、解析和DOM树构建"></a>二、解析和DOM树构建</h2><h3 id="解析-综述"><a href="#解析-综述" class="headerlink" title="解析 - 综述"></a>解析 - 综述</h3><h4 id="Part-One-解析"><a href="#Part-One-解析" class="headerlink" title="- Part One  解析"></a>- Part One  解析</h4><blockquote>
+<p>解析文档是将文档转化为更有意义的结构,也就是可以让代码理解和使用的结构。<br>解析得到的结果通常称作 <code>解析树</code> 或 <code>语法树</code>。</p>
+</blockquote>
+<p>示例-解析 <code>2 + 3 - 1</code> 这个表达式,会返回下面的树：<br><img src="/2017/05/26/浏览器相关/how_browsers_work/parseTree.png" alt><br>(图2-2 数学表达式树节点)</p>
+<h4 id="Part-Two-文法"><a href="#Part-Two-文法" class="headerlink" title="- Part Two 文法"></a>- Part Two 文法</h4><p>本章节中重点理解需要理解的概念是 <code>上下文无关文法</code> 。<br><code>上下文无关文法</code> 不是人类的语言，不具有 <code>二义性</code> , <code>无歧义</code> 。例如 <code>汉语</code> 就是很明显的 <code>上下文相关文法</code> ，每个字的含义要通过上下文才能具体确定其含义。</p>
+<h4 id="Part-Three-解析器和词法分析器的组合"><a href="#Part-Three-解析器和词法分析器的组合" class="headerlink" title="- Part Three 解析器和词法分析器的组合"></a>- Part Three 解析器和词法分析器的组合</h4><p><strong><p style="color:#15A05D;display：block">解析过程分为 词法分析、 语法分析 两个过程</p></strong><br><img src="/2017/05/26/浏览器相关/how_browsers_work/parseProcess.png" alt><br>(图2-3 从源文档到解析树)</p>
+<h4 id="Part-Four-翻译"><a href="#Part-Four-翻译" class="headerlink" title="- Part Four 翻译"></a>- Part Four 翻译</h4><blockquote>
+<p>很多时候，解析树还不是最终产品。解析通常是在翻译过程中使用的，而翻译是指将输入文档转换成另一种格式。编译就是这样一个例子。编译器可将源代码编译成机器代码，具体过程是首先将源代码解析成解析树，然后将解析树翻译成机器代码文档。</p>
+</blockquote>
+<h3 id="HTML解析器"><a href="#HTML解析器" class="headerlink" title="HTML解析器"></a>HTML解析器</h3><h4 id="Part-One-简单介绍"><a href="#Part-One-简单介绍" class="headerlink" title="- Part One 简单介绍"></a>- Part One 简单介绍</h4><p>HTML解析器的任务就是讲HTML标记解析成解析树</p>
+<p>上下文无关文法可以用BNF等格式进行定义。但是所有常规解析器都不适用于 HTML ,因为HTML <code>不是上下文无关文法</code>。<br><strong><p style="color:red;display：block">定义 HTML 的正规格式是：DTD ，与 XML 类似。但是由于 HTML 需要有更大的容错性所以与XML的严格语法还是有区别的，故不能用类XML解析器来解析HTML </p></strong></p>
+<h4 id="Part-Two-DOM"><a href="#Part-Two-DOM" class="headerlink" title="- Part Two DOM"></a>- Part Two DOM</h4><blockquote>
+<p>解析器输出的的 “解析树” 是由DOM元素和属性节点构成的树结构。DOM 是文档对象模型,它是 HTML 文档的对象表示，同时也是外部内容（例如 JavaScript）与 HTML 元素之间的接口。<br>解析树的根节点是“Document”对象。</p>
+</blockquote>
+<p>DOM 与标记之间几乎是一一对应的关系。比如下面这段标记：<br><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">p</span>&gt;</span></span><br><span class="line">      Hello World</span><br><span class="line">    <span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">div</span>&gt;</span> <span class="tag">&lt;<span class="name">img</span> <span class="attr">src</span>=<span class="string">"example.png"</span>/&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
+<p>上述代码，可翻译成如下DOM树：<br><img src="/2017/05/26/浏览器相关/how_browsers_work/domTree.png" alt></p>
+<h4 id="Part-Three-解析算法"><a href="#Part-Three-解析算法" class="headerlink" title="-Part Three 解析算法"></a>-Part Three 解析算法</h4><p>HTML 无法用常规的 <code>自上而下</code> 或 <code>自下而上</code> 的解析器进行解析<br>Reason:<br>      <code>1. 语言的宽容本质</code><br>      <code>2. 浏览器历来对一些常见的无效HTML用法采取包容态度</code><br>      <code>3. 解析过程需要不断反复，如果脚本包含document.writr() 等...</code><br><strong>浏览器创建了自定义解析器来解析HTML,解析算法由两个阶段组成：<code>标记化</code> 和 <code>树构建</code></strong><br><img src="/2017/05/26/浏览器相关/how_browsers_work/parseHTML.png" alt><br>(图2-5 HTML解析流程 Tokeniser是词法分析过程)</p>
+<h5 id="（1）标记化算法"><a href="#（1）标记化算法" class="headerlink" title="（1）标记化算法"></a>（1）标记化算法</h5><p><strong>标记化过程就是词法分析过程</strong></p>
+<blockquote>
+<p>该算法的输出结果是 HTML 标记。该算法使用状态机来表示。每一个状态接收来自输入信息流的一个或多个字符，并根据这些字符更新下一个状态。当前的标记化状态和树结构状态会影响进入下一状态的决定。这意味着，即使接收的字符相同，对于下一个正确的状态也会产生不同的结果，具体取决于当前的状态。</p>
+</blockquote>
+<h5 id="（2）树构建算法"><a href="#（2）树构建算法" class="headerlink" title="（2）树构建算法"></a>（2）树构建算法</h5><blockquote>
+<p>在创建解析器的同时，也会创建 Document 对象。在树构建阶段，以 Document 为根节点的 DOM 树也会不断进行修改，向其中添加各种元素。标记生成器发送的每个节点都会由树构建器进行处理。规范中定义了每个标记所对应的 DOM 元素，这些元素会在接收到相应的标记时创建。这些元素不仅会添加到 DOM 树中，还会添加到开放元素的堆栈中。此堆栈用于纠正嵌套错误和处理未关闭的标记。其算法也可以用状态机来描述。这些状态称为“插入模式”</p>
+</blockquote>
+<p><strong>让我们来看看示例输入的树构建过程：:</strong><br><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">    Hello world</span><br><span class="line">  <span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>树构建阶段的输入是一个来自标记化阶段的标记序列。第一个模式是 <code>“initial mode”</code> 。接收 HTML 标记后转为 <code>“before html”</code> 模式，并在这个模式下重新处理此标记。这样会创建一个 HTMLHtmlElement 元素，并将其附加到 Document 根对象上。</li>
+<li>然后状态将改为“before head”。此时我们接收 <code>“body”</code> 标记。即使我们的示例中没有 <code>“head”标记</code> ，系统也会隐式创建一个 HTMLHeadElement，并将其添加到树中。</li>
+<li>现在我们进入了 <code>“in head”</code> 模式，然后转入 <code>“after head”</code> 模式。系统对 body 标记进行重新处理，创建并插入 HTMLBodyElement，同时模式转变为“in body”。</li>
+<li>现在，接收由“Hello world”字符串生成的一系列字符标记。接收第一个字符时会创建并插入“Text”节点，而其他字符也将附加到该节点。</li>
+<li>接收 body 结束标记会触发“after body”模式。现在我们将接收 HTML 结束标记，然后进入 <code>“after after body”</code> 模式。接收到文件结束标记后，解析过程就此结束。<br><img src="/2017/05/26/浏览器相关/how_browsers_work/treeConstruction.gif" alt><br>(图2-6 HTML树构建)</li>
+</ul>
+<h4 id="Part-Four-解析结束后的操作"><a href="#Part-Four-解析结束后的操作" class="headerlink" title="- Part Four 解析结束后的操作"></a>- Part Four 解析结束后的操作</h4><p>浏览器将文档标注为交互状态，并开始解析处于 <code>“defferred”</code>（文档解析完成后才执行的脚本） 模式的脚本，然后文档设置为 <code>“完成”</code></p>
+<h3 id="CSS解析"><a href="#CSS解析" class="headerlink" title="CSS解析"></a>CSS解析</h3><p><strong><p style="color:#15A05D;display：block">CSS是上下文无关文法,语法是采用 BNF 格式描述的</p></strong></p>
+<h3 id="处理脚本和样式被顺序"><a href="#处理脚本和样式被顺序" class="headerlink" title="处理脚本和样式被顺序"></a>处理脚本和样式被顺序</h3><h4 id="Part-One-脚本"><a href="#Part-One-脚本" class="headerlink" title="-Part One 脚本"></a>-Part One 脚本</h4><p>网络的模型是同步的，解析器遇到 script标签 会立即解析并执行脚本，此时文档的解析将会停止直到脚本执行完毕。<br>在HTML5 中 <strong>script defer 不会使文档停止解析</strong><br><strong>script async 将脚本标记为异步，以便由其他线程解析并执行</strong></p>
+<h4 id="Part-Two-预解析"><a href="#Part-Two-预解析" class="headerlink" title="-Part Two 预解析"></a>-Part Two 预解析</h4><p><strong><p style="color:#15A05D;display：block">在执行脚本时，其他线程会解析文档的其余部分，找出并加载需要通过网络加载的其他资源。通过这种方式，资源可以在并行连接上加载，从而提高总体速度。<br>预解析不会修改DOM树，而是将这项工作交给主解析器处理。</p></strong></p>
+<h4 id="Part-Three-样式表"><a href="#Part-Three-样式表" class="headerlink" title="-Part Three 样式表"></a>-Part Three 样式表</h4><blockquote>
+<p>理论上来说，应用样式表不会更改 DOM 树，但是脚本在文档解析阶段会请求样式信息。如果当时还没有加载和解析样式，脚本就会获得错误的回复，这样显然会产生很多问题。</p>
+</blockquote>
+<ul>
+<li>Firefox 在样式表加载和解析的过程中，会禁止所有脚本。</li>
+<li>Firefox 在样式表加载和解析的过程中，会禁止所有脚本</li>
+</ul>
+<hr>
+<h2 id="三、呈现树构建"><a href="#三、呈现树构建" class="headerlink" title="三、呈现树构建"></a>三、呈现树构建</h2><h3 id="简要介绍"><a href="#简要介绍" class="headerlink" title="简要介绍"></a>简要介绍</h3><p>在DOM树构建的同时，浏览器会构建另一个树结构：呈现树(Render Tree)。<br><strong><p style="color:#15A05D;display：block">呈现树是由可视化元素按照其显示顺序而组成的树，也是文档的可视化元素。（呈现树的主要作用是 按照正确的顺序绘制内容）</p></strong></p>
+<p>【呈现器/呈现对象】：WebKit将呈现树中的元素成为 <code>呈现器</code> 或者 <code>呈现对象</code>。呈现器知道如何布局并将自身及其子元素绘制出来。<br><strong>每一个呈现器都代表了一个矩形区域，通常对应于相关节点的CSS呈现树和DOM树的关系</strong></p>
+<h3 id="呈现树和DOM树的关系"><a href="#呈现树和DOM树的关系" class="headerlink" title="呈现树和DOM树的关系"></a>呈现树和DOM树的关系</h3><blockquote>
+<p>呈现器和DOM元素相对应，但是不是一一对应。非可视化的DOM元素（比如head）是不会插入呈现树当中的。</p>
+</blockquote>
+<p><strong><p style="color:red;display：block">如果display=“none” ,那么也不会显示在呈现树当中。但是 visibility=”hidden” 仍然会显示<br>呈现器在树中的位置与DOM节点不同，浮动定位和绝对定位的元素就是这样,他们处于正常流之外,放置在树中的其他地方,并映射到真正的框架,而放在原位的是站位框架。</p></strong><br><img src="/2017/05/26/浏览器相关/how_browsers_work/render_DOM_tree.png" alt><br>(图3-1 呈现树及其对应的DOM树 初始容器 block 为“viewport”，而在 WebKit 中则为“RenderView”对象。)</p>
+<h3 id="构建呈现树流程"><a href="#构建呈现树流程" class="headerlink" title="构建呈现树流程"></a>构建呈现树流程</h3><blockquote>
+<p>在 WebKit 中，解析样式和创建呈现器的过程称为“附加”。每个 DOM 节点都有一个“attach”方法。附加是同步进行的，将节点插入 DOM 树需要调用新的节点“attach”方法。</p>
+</blockquote>
+<p>处理 html 和 body 标记就会构建呈现树根节点。这个根节点呈现对象对应于 CSS 规范中所说的容器 block，这是最上层的 block，包含了其他所有 block。它的尺寸就是视口，即浏览器窗口显示区域的尺寸。Firefox 称之为 ViewPortFrame，而 WebKit 称之为 RenderView。这就是文档所指向的呈现对象。呈现树的其余部分以 DOM 树节点插入的形式来构建。</p>
+<h3 id="样式计算"><a href="#样式计算" class="headerlink" title="样式计算"></a>样式计算</h3><p><code>(注：浏览器允许用户自定义样式)</code><br><strong>计算难点</strong></p>
+<ul>
+<li>样式数据是一个超大的数据结构，储存了无数的样式属性，可能造成内存问题。</li>
+<li>如果不进行优化，为每一个元素查询匹配规则会造成性能问题</li>
+<li>应用规则涉及到相当复杂的层叠规则</li>
+</ul>
+<hr>
+<h2 id="四、布局"><a href="#四、布局" class="headerlink" title="四、布局"></a>四、布局</h2><blockquote>
+<p>呈现器在创建完成并添加到呈现树时，并不包含位置和大小信息。计算这些值的过程称为布局或重排。<br>HTML 采用基于流的布局模型，这意味着大多数情况下只要一次遍历就能计算出几何信息。处于流中靠后位置元素通常不会影响靠前位置元素的几何特征，因此布局可以按从左至右、从上至下的顺序遍历文档。但是也有例外情况，比如 HTML 表格的计算就需要不止一次的遍历 (3.5)。<br>坐标系是相对于根框架而建立的，使用的是上坐标和左坐标。<br>布局是一个递归的过程。它从根呈现器（对应于 HTML 文档的 <html> 元素）开始，然后递归遍历部分或所有的框架层次结构，为每一个需要计算的呈现器计算几何信息。<br>根呈现器的位置左边是 0,0，其尺寸为视口（也就是浏览器窗口的可见区域）。<br>所有的呈现器都有一个“layout”或者“reflow”方法，每一个呈现器都会调用其需要进行布局的子代的 layout 方法。</html></p>
+</blockquote>
+<hr>
+<h2 id="五、绘制"><a href="#五、绘制" class="headerlink" title="五、绘制"></a>五、绘制</h2><blockquote>
+<p>在绘制阶段，系统会遍历呈现树，并调用呈现器的“paint”方法，将呈现器的内容显示在屏幕上。绘制工作是使用用户界面基础组件完成的。</p>
+</blockquote>
+<h3 id="全局绘制和增量绘制"><a href="#全局绘制和增量绘制" class="headerlink" title="全局绘制和增量绘制"></a>全局绘制和增量绘制</h3><blockquote>
+<p>和布局一样，绘制也分为全局（绘制整个呈现树）和增量两种。在增量绘制中，部分呈现器发生了更改，但是不会影响整个树。更改后的呈现器将其在屏幕上对应的矩形区域设为无效，这导致 OS 将其视为一块“dirty 区域”，并生成“paint”事件。OS 会很巧妙地将多个区域合并成一个。在 Chrome 浏览器中，情况要更复杂一些，因为 Chrome 浏览器的呈现器不在主进程上。Chrome 浏览器会在某种程度上模拟 OS 的行为。展示层会侦听这些事件，并将消息委托给呈现根节点。然后遍历呈现树，直到找到相关的呈现器，该呈现器会重新绘制自己（通常也包括其子代）。</p>
+</blockquote>
+<hr>
+<h2 id="六、动态变化"><a href="#六、动态变化" class="headerlink" title="六、动态变化"></a>六、动态变化</h2><blockquote>
+<p>在发生变化时，浏览器会尽可能做出最小的响应。因此，元素的颜色改变后，只会对该元素进行重绘。元素的位置改变后，只会对该元素及其子元素（可能还有同级元素）进行布局和重绘。添加 DOM 节点后，会对该节点进行布局和重绘。一些重大变化（例如增大“html”元素的字体）会导致缓存无效，使得整个呈现树都会进行重新布局和绘制。</p>
+</blockquote>
+<hr>
+<h2 id="七、呈现引擎的线程"><a href="#七、呈现引擎的线程" class="headerlink" title="七、呈现引擎的线程"></a>七、呈现引擎的线程</h2><p><strong><p style="color:red;display：block">Rendering Engine 采用了单线程。除了网络操作，其他操作都是在单线程中进行了<br>网络操作可由多个并行线程执行。并行连接数是有限的（通常2-6个）</p>
+</strong>时间循环<strong>
+</strong></p><p style="color:#16A05D;display：block">浏览器主线程就是时间循环。它是一个无限循环，永远处于接收处理状态，等待事件（如布局盒绘制时间）发生，并进行处理。</p><p></p>
+<hr>
+<h2 id="八、CSS2可视化模型"><a href="#八、CSS2可视化模型" class="headerlink" title="八、CSS2可视化模型"></a>八、CSS2可视化模型</h2><h3 id="画布"><a href="#画布" class="headerlink" title="画布"></a>画布</h3><p>“画布”这一术语是指“用来呈现格式化结构的空间”，也就是供浏览器绘制内容的区域。画布的空间尺寸大小是无限的，但是浏览器会根据视口的尺寸选择一个初始宽度。<br>画布如果包含在其他画布内，就是透明的；否则会由浏览器指定一种颜色。</p>
+<h3 id="CSS-框模型"><a href="#CSS-框模型" class="headerlink" title="CSS 框模型"></a>CSS 框模型</h3><p>CSS 框模型描述的是针对文档树中的元素而生成，并根据可视化格式模型进行布局的矩形框。<br>每个框都有一个内容区域（例如文本、图片等），还有可选的周围补白、边框和边距区域。<br><img src="/2017/05/26/浏览器相关/how_browsers_work/css_div.jpg" alt><br>(图8-1 CSS2 框模型)</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/browser/" rel="tag"># browser</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/05/24/C++/simple_files/" rel="next" title="C++ 文件输入输出">
+                <i class="fa fa-chevron-left"></i> C++ 文件输入输出
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/05/29/JavaScript/001_javascritp_prototype/" rel="prev" title="JavaScirpt基础（一）—— 原型、原型链">
+                JavaScirpt基础（一）—— 原型、原型链 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image" src="/images/avatar.jpg" alt="Helen">
+          <p class="site-author-name" itemprop="name">Helen</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">18</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">15</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/HelenHai" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#摘要"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#简介及浏览器基础知识"><span class="nav-number">2.</span> <span class="nav-text">简介及浏览器基础知识</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#浏览器的高层结构"><span class="nav-number">2.1.</span> <span class="nav-text">浏览器的高层结构</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#一、呈现引擎"><span class="nav-number">3.</span> <span class="nav-text">一、呈现引擎</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Introduction"><span class="nav-number">3.1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#主流程（渲染流程）"><span class="nav-number">3.2.</span> <span class="nav-text">主流程（渲染流程）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、解析和DOM树构建"><span class="nav-number">4.</span> <span class="nav-text">二、解析和DOM树构建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#解析-综述"><span class="nav-number">4.1.</span> <span class="nav-text">解析 - 综述</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Part-One-解析"><span class="nav-number">4.1.1.</span> <span class="nav-text">- Part One  解析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Part-Two-文法"><span class="nav-number">4.1.2.</span> <span class="nav-text">- Part Two 文法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Part-Three-解析器和词法分析器的组合"><span class="nav-number">4.1.3.</span> <span class="nav-text">- Part Three 解析器和词法分析器的组合</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Part-Four-翻译"><span class="nav-number">4.1.4.</span> <span class="nav-text">- Part Four 翻译</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HTML解析器"><span class="nav-number">4.2.</span> <span class="nav-text">HTML解析器</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Part-One-简单介绍"><span class="nav-number">4.2.1.</span> <span class="nav-text">- Part One 简单介绍</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Part-Two-DOM"><span class="nav-number">4.2.2.</span> <span class="nav-text">- Part Two DOM</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Part-Three-解析算法"><span class="nav-number">4.2.3.</span> <span class="nav-text">-Part Three 解析算法</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#（1）标记化算法"><span class="nav-number">4.2.3.1.</span> <span class="nav-text">（1）标记化算法</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#（2）树构建算法"><span class="nav-number">4.2.3.2.</span> <span class="nav-text">（2）树构建算法</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Part-Four-解析结束后的操作"><span class="nav-number">4.2.4.</span> <span class="nav-text">- Part Four 解析结束后的操作</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CSS解析"><span class="nav-number">4.3.</span> <span class="nav-text">CSS解析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#处理脚本和样式被顺序"><span class="nav-number">4.4.</span> <span class="nav-text">处理脚本和样式被顺序</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Part-One-脚本"><span class="nav-number">4.4.1.</span> <span class="nav-text">-Part One 脚本</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Part-Two-预解析"><span class="nav-number">4.4.2.</span> <span class="nav-text">-Part Two 预解析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Part-Three-样式表"><span class="nav-number">4.4.3.</span> <span class="nav-text">-Part Three 样式表</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、呈现树构建"><span class="nav-number">5.</span> <span class="nav-text">三、呈现树构建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#简要介绍"><span class="nav-number">5.1.</span> <span class="nav-text">简要介绍</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#呈现树和DOM树的关系"><span class="nav-number">5.2.</span> <span class="nav-text">呈现树和DOM树的关系</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#构建呈现树流程"><span class="nav-number">5.3.</span> <span class="nav-text">构建呈现树流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#样式计算"><span class="nav-number">5.4.</span> <span class="nav-text">样式计算</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四、布局"><span class="nav-number">6.</span> <span class="nav-text">四、布局</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#五、绘制"><span class="nav-number">7.</span> <span class="nav-text">五、绘制</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#全局绘制和增量绘制"><span class="nav-number">7.1.</span> <span class="nav-text">全局绘制和增量绘制</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#六、动态变化"><span class="nav-number">8.</span> <span class="nav-text">六、动态变化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#七、呈现引擎的线程"><span class="nav-number">9.</span> <span class="nav-text">七、呈现引擎的线程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#八、CSS2可视化模型"><span class="nav-number">10.</span> <span class="nav-text">八、CSS2可视化模型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#画布"><span class="nav-number">10.1.</span> <span class="nav-text">画布</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CSS-框模型"><span class="nav-number">10.2.</span> <span class="nav-text">CSS 框模型</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Helen</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("gvJTGu13470XEVyjJF3tToux-gzGzoHsz", "IpXgrLXSKH5FHXACCHHDvaht");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

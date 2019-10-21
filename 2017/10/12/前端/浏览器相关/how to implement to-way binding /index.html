@@ -1,0 +1,905 @@
+<!doctype html>
+
+
+
+
+<html class="theme-next mist" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Lobster Two:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="browser,">
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.1">
+
+
+
+
+
+
+<meta name="description" content="摘要接触Vue有一段时间了，但是对于其双向绑定的实现一直是似懂非懂，今天看到一篇写的比较好的文章 传送门1 根据原作者的指导自己也去实现了一遍简单的 demo （本文的demo均基于Object.defineProperty 实现数据劫持，利用了对Vue.js实现双向绑定的思想） [注] 本文所有图片均来自于：传送门2 几种主流的双向绑定1.发布-订阅模式2.脏值检测  通过对比数据是否有变更，来">
+<meta name="keywords" content="browser">
+<meta property="og:type" content="article">
+<meta property="og:title" content="实现一个简单的双向绑定">
+<meta property="og:url" content="http://yoursite.com/2017/10/12/前端/浏览器相关/how to implement to-way binding /index.html">
+<meta property="og:site_name" content="Helen&#39;s Blog">
+<meta property="og:description" content="摘要接触Vue有一段时间了，但是对于其双向绑定的实现一直是似懂非懂，今天看到一篇写的比较好的文章 传送门1 根据原作者的指导自己也去实现了一遍简单的 demo （本文的demo均基于Object.defineProperty 实现数据劫持，利用了对Vue.js实现双向绑定的思想） [注] 本文所有图片均来自于：传送门2 几种主流的双向绑定1.发布-订阅模式2.脏值检测  通过对比数据是否有变更，来">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/2017/10/12/前端/浏览器相关/how%20to%20implement%20to-way%20binding%20/img/bVBQYu">
+<meta property="og:updated_time" content="2019-10-21T07:48:06.626Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="实现一个简单的双向绑定">
+<meta name="twitter:description" content="摘要接触Vue有一段时间了，但是对于其双向绑定的实现一直是似懂非懂，今天看到一篇写的比较好的文章 传送门1 根据原作者的指导自己也去实现了一遍简单的 demo （本文的demo均基于Object.defineProperty 实现数据劫持，利用了对Vue.js实现双向绑定的思想） [注] 本文所有图片均来自于：传送门2 几种主流的双向绑定1.发布-订阅模式2.脏值检测  通过对比数据是否有变更，来">
+<meta name="twitter:image" content="http://yoursite.com/2017/10/12/前端/浏览器相关/how%20to%20implement%20to-way%20binding%20/img/bVBQYu">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: false,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/10/12/前端/浏览器相关/how to implement to-way binding /">
+
+
+
+
+
+  <title>实现一个简单的双向绑定 | Helen's Blog</title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?3c99e785d97e7696f0c4cd8af29d657e";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Helen's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/10/12/前端/浏览器相关/how to implement to-way binding /">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Helen">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Helen's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">实现一个简单的双向绑定</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-12T16:05:13+08:00">
+                2017-10-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/前端/" itemprop="url" rel="index">
+                    <span itemprop="name">前端</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+             <span id="/2017/10/12/前端/浏览器相关/how to implement to-way binding /" class="leancloud_visitors" data-flag-title="实现一个简单的双向绑定">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数 </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><p>接触Vue有一段时间了，但是对于其双向绑定的实现一直是似懂非懂，今天看到一篇写的比较好的文章 <a href="https://ghoskno.github.io/2017/02/21/vue-bind/" target="_blank" rel="noopener">传送门1</a> 根据原作者的指导自己也去实现了一遍简单的 demo （本文的demo均基于Object.defineProperty 实现数据劫持，利用了对Vue.js实现双向绑定的思想）</p>
+<p>[注] 本文所有图片均来自于：<a href="https://github.com/DMQ/mvvm#_2" target="_blank" rel="noopener">传送门2</a></p>
+<h2 id="几种主流的双向绑定"><a href="#几种主流的双向绑定" class="headerlink" title="几种主流的双向绑定"></a>几种主流的双向绑定</h2><p>1.发布-订阅模式<br>2.脏值检测</p>
+<blockquote>
+<p>通过对比数据是否有变更，来决定是否更新视图。最简单的可以通过定时轮询去检测数据的变动。当然Google不会这么low, Angular 只有在指定事件触发时进入脏值检测：</p>
+<ul>
+<li>DOM事件，比如用户输入文本点击按钮等（ng-click）</li>
+<li>XHR响应事件</li>
+<li>浏览器 Location 变更</li>
+<li>Timer事件</li>
+<li>执行 $digidt() 或 $apply()</li>
+</ul>
+</blockquote>
+<p>3.数据劫持<br>Vue.js 采用的是 <code>数据劫持+发布/订阅模式</code> 的方式，通过 <code>Object.defineProperty()</code> 来劫持各个属性的 setter/getter， 在数据变动时发布消息给订阅者（Wacther）, 触发相应的监听回调。下图展示了Vue实现双向绑定的流程<br><img src="/2017/10/12/前端/浏览器相关/how to implement to-way binding /img/bVBQYu" alt="图片描述"></p>
+<h1 id="实现一个简单的双向绑定"><a href="#实现一个简单的双向绑定" class="headerlink" title="实现一个简单的双向绑定"></a>实现一个简单的双向绑定</h1><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">&lt;!DOCTYPE html&gt;</span><br><span class="line">&lt;html lang=<span class="string">"en"</span>&gt;</span><br><span class="line">    &lt;head&gt;</span><br><span class="line">        &lt;title&gt;双向绑定最最最初级demo&lt;<span class="regexp">/title&gt;</span></span><br><span class="line"><span class="regexp">        &lt;meta charset="UTF-8"&gt;</span></span><br><span class="line"><span class="regexp">    &lt;/</span>head&gt;</span><br><span class="line">    &lt;body&gt;</span><br><span class="line">        &lt;div id=<span class="string">"app"</span>&gt;</span><br><span class="line">            &lt;input type=<span class="string">"text"</span> id=<span class="string">"txt"</span>&gt;</span><br><span class="line">            &lt;p id=<span class="string">"show-txt"</span>&gt;<span class="xml"><span class="tag">&lt;/<span class="name">p</span>&gt;</span></span></span><br><span class="line">        &lt;<span class="regexp">/div&gt;</span></span><br><span class="line"><span class="regexp">    &lt;/</span>body&gt;</span><br><span class="line">    &lt;script&gt;</span><br><span class="line">        <span class="keyword">var</span> obj=&#123;&#125;</span><br><span class="line">        <span class="built_in">Object</span>.defineProperty(obj,<span class="string">'txt'</span>,&#123;</span><br><span class="line">            <span class="keyword">get</span>:function()&#123;</span><br><span class="line">                <span class="keyword">return</span> obj</span><br><span class="line">            &#125;,</span><br><span class="line">            <span class="keyword">set</span>:function(newValue)&#123;</span><br><span class="line">                <span class="built_in">document</span>.getElementById(<span class="string">'txt'</span>).value = newValue</span><br><span class="line">                <span class="built_in">document</span>.getElementById(<span class="string">'show-txt'</span>).innerHTML = newValue</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;)</span><br><span class="line">        <span class="built_in">document</span>.addEventListener(<span class="string">'keyup'</span>,<span class="function"><span class="keyword">function</span>(<span class="params">e</span>)</span>&#123;</span><br><span class="line">            obj.txt = e.target.value</span><br><span class="line">        &#125;)</span><br><span class="line">    &lt;<span class="regexp">/script&gt;</span></span><br><span class="line"><span class="regexp">&lt;/</span>html&gt;</span><br></pre></td></tr></table></figure>
+<h1 id="进阶版demo"><a href="#进阶版demo" class="headerlink" title="进阶版demo"></a>进阶版demo</h1><p>DOM操作是非常耗时和好性能，所以在优化过程中先从DOM操作入手。因为遍历解析过程中有多次DOM操作，为了提高性能和效率，需要一种方法来避免对DOM元素的直接封装操作。在Vue使用 <code>DocumentFragment</code> 作为替代容器。<br><code>DocumentFragment</code> 接口表示一个没有父级文件的最小文档对象。它被当做一个轻量版本的Document 使用。所以使用 DocumentFragment 代替DOM直接处理，可以提高性能和速度。</p>
+<h2 id="封装DOM节点为-DocumentFragment"><a href="#封装DOM节点为-DocumentFragment" class="headerlink" title="封装DOM节点为 DocumentFragment"></a>封装DOM节点为 DocumentFragment</h2><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//将传入 node 的子节点进行劫持，经过处理后重新挂载回目标节点</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">convertNode</span>(<span class="params">node,vm</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">var</span> fragment = <span class="built_in">document</span>.createDocumentFragment(),</span><br><span class="line">        child</span><br><span class="line">    <span class="keyword">while</span>(child = node.firstChild)&#123;</span><br><span class="line">        <span class="comment">//将原生节点拷贝到 fragment，并删除之前的child节点</span></span><br><span class="line">        fragment.appendChild(child)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> fragment</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> dom = convertNode(<span class="built_in">document</span>.getElementById(<span class="string">'app'</span>))</span><br><span class="line"><span class="built_in">document</span>.getElmentById(<span class="string">'app'</span>).appendChild(dom)</span><br></pre></td></tr></table></figure>
+<h2 id="实现Complie解析模板指令"><a href="#实现Complie解析模板指令" class="headerlink" title="实现Complie解析模板指令"></a>实现Complie解析模板指令</h2><!-- ![图片描述](https://image-static.segmentfault.com/111/738/1117380429-57b3110440af0_articlex) -->
+<p>Complie 主要做的事情就是解析模板指令，将模板中的变量替换为数据。所以要遍历整个DOM树，进行扫描解析编译，调用对应的指令渲染函数进行渲染，并调用对应的指令更新函数进行绑定<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;div id=&quot;app&quot;&gt;</span><br><span class="line">    &lt;input type=&quot;text&quot; id=&quot;txt&quot; h-model=&quot;text&quot;&gt;</span><br><span class="line">    &#123;&#123;text&#125;&#125;</span><br><span class="line">&lt;/div&gt;</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">convertNode</span>(<span class="params">node,vm</span>)</span>&#123;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="keyword">while</span>(child = node.firstChild)&#123;</span><br><span class="line">        Compile(child,vm)</span><br><span class="line">        fragment.appendChild(child)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> fragment</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Compile</span>(<span class="params">node,vm</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">var</span> reg = <span class="regexp">/\&#123;\&#123;(.*)\&#125;\&#125;/</span></span><br><span class="line">    <span class="keyword">if</span>(node.nodeType===<span class="number">1</span>)&#123;  </span><br><span class="line">        <span class="keyword">var</span> attr = node.attributes  <span class="comment">//对所有属性进行解析</span></span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">var</span> i=<span class="number">0</span>;i&lt;attr.length;i++)&#123;</span><br><span class="line">            <span class="keyword">if</span>(attr[i].nodeName==<span class="string">'h-model'</span>)&#123;</span><br><span class="line">                <span class="comment">//将元素与数据绑定</span></span><br><span class="line">                <span class="keyword">var</span> bindName = attr[i].nodeValue</span><br><span class="line">                <span class="comment">//为输入框添加事件监听触发</span></span><br><span class="line">                node.addEventListener(<span class="string">'input'</span>,<span class="function"><span class="keyword">function</span>(<span class="params">e</span>)</span>&#123;</span><br><span class="line">                    vm.data[bindName] = e.target.value</span><br><span class="line">                    node.value = vm.data[bindName]</span><br><span class="line">                &#125;)</span><br><span class="line">                node.removeAttribute(<span class="string">'h-model'</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span>(node.nodeType===<span class="number">3</span>)&#123;</span><br><span class="line">                <span class="keyword">if</span>(reg.test(node.nodeValue))&#123;</span><br><span class="line">                    <span class="keyword">var</span> bindName = <span class="built_in">RegExp</span>.$<span class="number">1.</span>trim()</span><br><span class="line">                    <span class="built_in">console</span>.log(<span class="built_in">RegExp</span>.$<span class="number">1</span>)</span><br><span class="line">                    node.nodeValue = vm.data[bindName]</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<h2 id="ViewModel-层向-View-层的数据绑定"><a href="#ViewModel-层向-View-层的数据绑定" class="headerlink" title="ViewModel 层向 View 层的数据绑定"></a>ViewModel 层向 View 层的数据绑定</h2><p>接下来实现一个 <code>Xin</code> 构造器，通过 Compile 来解析模板指令，通过 Observer 监听属性数据的变化实现 <code>Model</code> 层向 <code>View</code> 层的数据绑定<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Xin</span>(<span class="params">options</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.data = options.data</span><br><span class="line">    Observer(<span class="keyword">this</span>.data,<span class="keyword">this</span>)</span><br><span class="line">    <span class="keyword">var</span> id = options.el</span><br><span class="line">    <span class="keyword">var</span> dom = convertNode(<span class="built_in">document</span>.getElementById(id),<span class="keyword">this</span>)</span><br><span class="line">    <span class="built_in">document</span>.getElementById(id).appendChild(dom)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>新建一个 vm 实例来测试一下 <code>Model --&gt; View</code> 的绑定情况<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> vm = <span class="keyword">new</span> Xin(&#123;</span><br><span class="line">    el:<span class="string">'app'</span>,</span><br><span class="line">    data:&#123;</span><br><span class="line">        text:<span class="string">'Hello MVVM'</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure></p>
+<p>#View 层向 viewModel 层的数据绑定<br>实际上，在 Observer 中我们已经通过 <code>数据劫持</code> 实现了监听每个数据的变化，在控制台打印 <code>console.log(val)</code> 就可以实时看到数据的变化。所以接下来实现的关键就是怎么用监听到的数据去更新视图。<br>在这里，我们去实现一个 <code>Wacther</code> 可以将它理解为观察者 ，他的作用是能够接收从 Observer 发过来的属性变动通知， 然后根据属性的变动更新视图 <code>update</code>。</p>
+<p>在监听过程中，为所有的 data 属性生成一个主题对象 Dep，Dep中包含需要维护的观察者列表。每当主题对象状态发生变化时，其相关依赖都会得到通知，并且被自动更新（数据变动会触发notify，再调用订阅者的update() 方法）<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Dep</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.subs=[]    <span class="comment">//订阅者队列</span></span><br><span class="line">&#125;</span><br><span class="line">Dep.prototype=&#123;</span><br><span class="line">    addSub:<span class="function"><span class="keyword">function</span>(<span class="params">sub</span>)</span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.subs.push(sub)</span><br><span class="line">    &#125;,</span><br><span class="line">    notify:<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.subs.forEach(<span class="function"><span class="keyword">function</span>(<span class="params">sub</span>)</span>&#123;</span><br><span class="line">            sub.update()</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">funcion Watcher(vm,node,bindName)&#123;</span><br><span class="line">    <span class="comment">//将全局Dep.target设置为当前页面元素node</span></span><br><span class="line">    Dep.target = <span class="keyword">this</span></span><br><span class="line">    <span class="comment">//完成watcher的初始化</span></span><br><span class="line">    <span class="keyword">this</span>.name = bindName</span><br><span class="line">    <span class="keyword">this</span>.node = node</span><br><span class="line">    <span class="keyword">this</span>.vm = vm</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.update()    <span class="comment">//初次绑定时进行更新</span></span><br><span class="line">    Dep.target = <span class="literal">null</span>    <span class="comment">//保证Dep.target唯一</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Watcher.prototype = &#123;</span><br><span class="line">    <span class="keyword">get</span>:function()&#123;</span><br><span class="line">        <span class="keyword">this</span>.value = <span class="keyword">this</span>.vm.data[<span class="keyword">this</span>.name]</span><br><span class="line">    &#125;,</span><br><span class="line">    update:<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.get()</span><br><span class="line">        <span class="keyword">this</span>.node.nodeValue = <span class="keyword">this</span>.value</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Observer</span>(<span class="params">obj,vm</span>)</span>&#123;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="built_in">Object</span>.defineProperty(obj,prop,&#123;</span><br><span class="line">        <span class="keyword">get</span>:function()&#123;...&#125;,</span><br><span class="line">        <span class="keyword">set</span>:function(newVal)&#123;</span><br><span class="line">            <span class="keyword">if</span>(val == newVal) <span class="keyword">return</span></span><br><span class="line">            val = newVal</span><br><span class="line">            <span class="comment">//data属性被修改，由dep触发view层更新</span></span><br><span class="line">            dep.notify()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>考虑这样一个问题，什么时候会有双向绑定？ <code>viewModel --&gt; view</code> 可能会发生在所有类型的DOM节点上，而 <code>view --&gt; viewModel</code> 只能发生在 input, select, textarea 等交互控件上。所以将文本节点包装成 <code>Watcher</code> , 添加相关元素的观察者列表中，Watcher 负责更新页面元素<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Compile</span>(<span class="params">node,vm</span>)</span>&#123;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="keyword">if</span>(node.nodeType ===<span class="number">3</span>)&#123;    <span class="comment">//文本节点类型</span></span><br><span class="line">        <span class="keyword">if</span>(reg.test(node.nodeValue))&#123;</span><br><span class="line">            <span class="keyword">var</span> bindName = <span class="built_in">RegExp</span>.$<span class="number">1.</span>trim()</span><br><span class="line">            <span class="keyword">new</span> Watcher = (vm,node,bindName)    <span class="comment">//为该页面元素node生产watcher</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>#更新</p>
+<p>本文中实现模板渲染的方法借鉴了 <code>Vue 1.x</code> 中实现模板渲染的方法。<br><code>Vue 2.x</code> 模板渲染 方法借鉴React 中的 <strong>VirtualDOM</strong>，基于 VirtualDOM。 Vue 2.x 还支持服务端渲染SSR</p>
+<p>#资料参考<br>1.<a href="https://github.com/DMQ/mvvm#_2" target="_blank" rel="noopener">https://github.com/DMQ/mvvm#_2</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/browser/" rel="tag"># browser</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/09/04/计算机语言/JavaScript/002_ES8_共享内存和原子操作/" rel="next" title="ES8 —— 共享内存和原子操作">
+                <i class="fa fa-chevron-left"></i> ES8 —— 共享内存和原子操作
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/02/16/前端/前端框架/understand mvc, mvvm/" rel="prev" title="理解MVC , MVVM">
+                理解MVC , MVVM <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image" src="/images/avatar.jpg" alt="Helen">
+          <p class="site-author-name" itemprop="name">Helen</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">23</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">18</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/HelenHai" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#摘要"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#几种主流的双向绑定"><span class="nav-number">2.</span> <span class="nav-text">几种主流的双向绑定</span></a></li></ol><li class="nav-item nav-level-1"><a class="nav-link" href="#实现一个简单的双向绑定"><span class="nav-number"></span> <span class="nav-text">实现一个简单的双向绑定</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#进阶版demo"><span class="nav-number"></span> <span class="nav-text">进阶版demo</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#封装DOM节点为-DocumentFragment"><span class="nav-number">1.</span> <span class="nav-text">封装DOM节点为 DocumentFragment</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实现Complie解析模板指令"><span class="nav-number">2.</span> <span class="nav-text">实现Complie解析模板指令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ViewModel-层向-View-层的数据绑定"><span class="nav-number">3.</span> <span class="nav-text">ViewModel 层向 View 层的数据绑定</span></a></li></ol></li></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Helen</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+  
+  <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("gvJTGu13470XEVyjJF3tToux-gzGzoHsz", "IpXgrLXSKH5FHXACCHHDvaht");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

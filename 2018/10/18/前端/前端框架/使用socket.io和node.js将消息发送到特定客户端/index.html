@@ -1,0 +1,907 @@
+<!doctype html>
+
+
+
+
+<html class="theme-next mist" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Lobster Two:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="前端框架,">
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.1">
+
+
+
+
+
+
+<meta name="description" content="原文链接：https://gxnotes.com/article/57622.html 问题描述我正在使用socket.io和node.js，直到现在看起来都不错，但是我不知道如何从服务器发送消息到一个特定的客户端，像这样：1client.send(message, receiverSessionId) 但是.send()和.broadcast()方法都没有提供我的需要。作为一个可能的解决方案，我">
+<meta name="keywords" content="前端框架">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用socket.io和node.js将消息发送到特定客户端">
+<meta property="og:url" content="http://yoursite.com/2018/10/18/前端/前端框架/使用socket.io和node.js将消息发送到特定客户端/index.html">
+<meta property="og:site_name" content="Helen&#39;s Blog">
+<meta property="og:description" content="原文链接：https://gxnotes.com/article/57622.html 问题描述我正在使用socket.io和node.js，直到现在看起来都不错，但是我不知道如何从服务器发送消息到一个特定的客户端，像这样：1client.send(message, receiverSessionId) 但是.send()和.broadcast()方法都没有提供我的需要。作为一个可能的解决方案，我">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-10-21T09:06:06.304Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用socket.io和node.js将消息发送到特定客户端">
+<meta name="twitter:description" content="原文链接：https://gxnotes.com/article/57622.html 问题描述我正在使用socket.io和node.js，直到现在看起来都不错，但是我不知道如何从服务器发送消息到一个特定的客户端，像这样：1client.send(message, receiverSessionId) 但是.send()和.broadcast()方法都没有提供我的需要。作为一个可能的解决方案，我">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: false,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/10/18/前端/前端框架/使用socket.io和node.js将消息发送到特定客户端/">
+
+
+
+
+
+  <title>使用socket.io和node.js将消息发送到特定客户端 | Helen's Blog</title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?3c99e785d97e7696f0c4cd8af29d657e";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Helen's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/10/18/前端/前端框架/使用socket.io和node.js将消息发送到特定客户端/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Helen">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Helen's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">使用socket.io和node.js将消息发送到特定客户端</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-10-18T14:05:03+08:00">
+                2018-10-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/前端/" itemprop="url" rel="index">
+                    <span itemprop="name">前端</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+             <span id="/2018/10/18/前端/前端框架/使用socket.io和node.js将消息发送到特定客户端/" class="leancloud_visitors" data-flag-title="使用socket.io和node.js将消息发送到特定客户端">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数 </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>原文链接：<a href="https://gxnotes.com/article/57622.html" target="_blank" rel="noopener">https://gxnotes.com/article/57622.html</a></p>
+<h1 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h1><p>我正在使用socket.io和node.js，直到现在看起来都不错，但是我不知道如何从服务器发送消息到一个特定的客户端，像这样：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">client.send(message, receiverSessionId)</span><br></pre></td></tr></table></figure></p>
+<p>但是.send()和.broadcast()方法都没有提供我的需要。<br>作为一个可能的解决方案，我发现.broadcast()方法接受第二个参数是一个不发送消息的SessionIds数组，所以我可以传递一个数组，所有SessionIds都连接到服务器，除了一个我希望发送消息，但我觉得必须有一个更好的解决方案。</p>
+<p>#最佳解决方案<br>那么你必须抓住客户端(惊喜)，你可以走简单的方式：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> io = io.listen(server);</span><br><span class="line">io.clients[sessionID].send()</span><br></pre></td></tr></table></figure></p>
+<p>这可能会破裂，我几乎不怀疑，但是io.clients可能会改变，所以请谨慎使用上述内容</p>
+<p>或者您自己跟踪客户端，因此将它们添加到connection侦听器中您自己的clients对象，并将其删除在disconnect侦听器中。</p>
+<p>我会使用后者，因为根据您的应用程序，您可能希望在客户端上拥有更多的状态，所以像clients[id] = {conn: clientConnect, data: {…}}这样的工作可能会做这个工作。</p>
+<h1 id="次佳解决方案"><a href="#次佳解决方案" class="headerlink" title="次佳解决方案"></a>次佳解决方案</h1><p>Ivo Wetzel的答案似乎在Socket.io 0.9中似乎没有效果。<br>简而言之，您现在必须保存socket.id并使用io.sockets.socket(savedSocketId).emit(…)向其发送消息。<br>这是我在集群Node.js服务器中的工作原理<br>首先，您需要将Redis store设置为商店，以便消息可以跨越进程：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> express = <span class="built_in">require</span>(<span class="string">"express"</span>);</span><br><span class="line"><span class="keyword">var</span> redis = <span class="built_in">require</span>(<span class="string">"redis"</span>);</span><br><span class="line"><span class="keyword">var</span> sio = <span class="built_in">require</span>(<span class="string">"socket.io"</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> client = redis.createClient()</span><br><span class="line"><span class="keyword">var</span> app = express.createServer();</span><br><span class="line"><span class="keyword">var</span> io = sio.listen(app);</span><br><span class="line"></span><br><span class="line">io.set(<span class="string">"store"</span>, <span class="keyword">new</span> sio.RedisStore);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// In this example we have one master client socket </span></span><br><span class="line"><span class="comment">// that receives messages from others.</span></span><br><span class="line"></span><br><span class="line">io.sockets.on(<span class="string">'connection'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">socket</span>) </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Promote this socket as master</span></span><br><span class="line">  socket.on(<span class="string">"I'm the master"</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Save the socket id to Redis so that all processes can access it.</span></span><br><span class="line">    client.set(<span class="string">"mastersocket"</span>, socket.id, <span class="function"><span class="keyword">function</span>(<span class="params">err</span>) </span>&#123;</span><br><span class="line">      <span class="keyword">if</span> (err) <span class="keyword">throw</span> err;</span><br><span class="line">      <span class="built_in">console</span>.log(<span class="string">"Master socket is now"</span> + socket.id);</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  socket.on(<span class="string">"message to master"</span>, <span class="function"><span class="keyword">function</span>(<span class="params">msg</span>) </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Fetch the socket id from Redis</span></span><br><span class="line">    client.get(<span class="string">"mastersocket"</span>, <span class="function"><span class="keyword">function</span>(<span class="params">err, socketId</span>) </span>&#123;</span><br><span class="line">      <span class="keyword">if</span> (err) <span class="keyword">throw</span> err;</span><br><span class="line">      io.sockets.socket(socketId).emit(msg);</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h1 id="第三种解决方案"><a href="#第三种解决方案" class="headerlink" title="第三种解决方案"></a>第三种解决方案</h1><p>一个比迄今为止提出的更简单的解决方案，使用socket.io v1.0.4进行测试：</p>
+<h2 id="server"><a href="#server" class="headerlink" title="server"></a>server</h2><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span></span><br><span class="line">    io = <span class="built_in">require</span>(<span class="string">'socket.io'</span>),</span><br><span class="line">    ioServer = io.listen(<span class="number">8000</span>),</span><br><span class="line">    sequence = <span class="number">1</span>;</span><br><span class="line">    clients = [];</span><br><span class="line"></span><br><span class="line"><span class="comment">// Event fired every time a new client connects:</span></span><br><span class="line">ioServer.on(<span class="string">'connection'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">socket</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.info(<span class="string">'New client connected (id='</span> + socket.id + <span class="string">').'</span>);</span><br><span class="line">    clients.push(socket);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// When socket disconnects, remove it from the list:</span></span><br><span class="line">    socket.on(<span class="string">'disconnect'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">var</span> index = clients.indexOf(socket);</span><br><span class="line">        <span class="keyword">if</span> (index != <span class="number">-1</span>) &#123;</span><br><span class="line">            clients.splice(index, <span class="number">1</span>);</span><br><span class="line">            <span class="built_in">console</span>.info(<span class="string">'Client gone (id='</span> + socket.id + <span class="string">').'</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// Every 1 second, sends a message to a random client:</span></span><br><span class="line">setInterval(<span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> randomClient;</span><br><span class="line">    <span class="keyword">if</span> (clients.length &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        randomClient = <span class="built_in">Math</span>.floor(<span class="built_in">Math</span>.random() * clients.length);</span><br><span class="line">        clients[randomClient].emit(<span class="string">'foo'</span>, sequence++);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;, <span class="number">1000</span>);</span><br></pre></td></tr></table></figure>
+<h2 id="client"><a href="#client" class="headerlink" title="client"></a>client</h2><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span></span><br><span class="line">    io = <span class="built_in">require</span>(<span class="string">'socket.io-client'</span>),</span><br><span class="line">    ioClient = io.connect(<span class="string">'http://localhost:8000'</span>);</span><br><span class="line"></span><br><span class="line">ioClient.on(<span class="string">'foo'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">msg</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.info(msg);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<h2 id="如何运行"><a href="#如何运行" class="headerlink" title="如何运行"></a>如何运行</h2><p>安装所需要的库<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">npm install socket.io</span><br><span class="line">npm install socket.io-client</span><br></pre></td></tr></table></figure></p>
+<p>运行服务器<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">node server</span><br></pre></td></tr></table></figure></p>
+<p>在单独的控制台中运行每个客户端<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">node client</span><br></pre></td></tr></table></figure></p>
+<h1 id="第四种方案"><a href="#第四种方案" class="headerlink" title="第四种方案"></a>第四种方案</h1><p>每个套接字加入一个名称为套接字号的房间，所以你可以：<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">io.to(socket#id).emit('hey')</span><br></pre></td></tr></table></figure></p>
+<p>【文档】<a href="http://socket.io/docs/rooms-and-namespaces/#default-room" target="_blank" rel="noopener">http://socket.io/docs/rooms-and-namespaces/#default-room</a></p>
+<h1 id="第五种方案"><a href="#第五种方案" class="headerlink" title="第五种方案"></a>第五种方案</h1><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">io.sockets.connected [socketid] .emit();</span><br></pre></td></tr></table></figure>
+<h1 id="第六种方案"><a href="#第六种方案" class="headerlink" title="第六种方案"></a>第六种方案</h1><p>您可以使用<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//仅发送消息给sender-client</span></span><br><span class="line">socket.emit(<span class="string">'message'</span>, <span class="string">'check this'</span>);</span><br><span class="line"><span class="comment">//或者您可以发送给包括发件人在内的所有听众</span></span><br><span class="line">io.emit(<span class="string">'message'</span>, <span class="string">'check this'</span>);</span><br><span class="line"><span class="comment">//发送给发件人以外的所有听众</span></span><br><span class="line">socket.broadcast.emit(<span class="string">'message'</span>, <span class="string">'this is a message'</span>);</span><br><span class="line"><span class="comment">//或者你可以把它发送到一个房间</span></span><br><span class="line">socket.broadcast.to(<span class="string">'chatroom'</span>).emit(<span class="string">'message'</span>, <span class="string">'this is the message to all'</span>);</span><br></pre></td></tr></table></figure></p>
+<h1 id="第七种方案"><a href="#第七种方案" class="headerlink" title="第七种方案"></a>第七种方案</h1><p>无论我们使用哪个版本，如果我们只是console.log()我们在我们的服务器端nodejs代码中使用的”io”对象， io.on(‘connection’，function(socket){…});]，我们可以看到”io”只是一个json对象，并且有很多子对象，其中存储了套接字id和套接字对象。</p>
+<p>我使用的是socket.io版本1.3.5，btw。</p>
+<p>如果我们看io对象，它包含，<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">sockets:</span><br><span class="line"> &#123; <span class="attr">name</span>: <span class="string">'/'</span>,</span><br><span class="line">   server: [Circular],</span><br><span class="line">   sockets: [ [<span class="built_in">Object</span>], [<span class="built_in">Object</span>] ],</span><br><span class="line">   connected:</span><br><span class="line">    &#123; <span class="attr">B5AC9w0sYmOGWe4fAAAA</span>: [<span class="built_in">Object</span>],</span><br><span class="line">      <span class="string">'hWzf97fmU-TIwwzWAAAB'</span>: [<span class="built_in">Object</span>] &#125;,</span><br></pre></td></tr></table></figure></p>
+<p>这里我们可以看到这个socket的”B5AC9w0sYmOGWe4fAAAA”等等，所以我们可以做<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">io.sockets.connected[socketid].emit();</span><br></pre></td></tr></table></figure></p>
+<p>再次，进一步的检查，我们可以看到，<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">eio:</span><br><span class="line"> &#123; <span class="attr">clients</span>:</span><br><span class="line">    &#123; <span class="attr">B5AC9w0sYmOGWe4fAAAA</span>: [<span class="built_in">Object</span>],</span><br><span class="line">      <span class="string">'hWzf97fmU-TIwwzWAAAB'</span>: [<span class="built_in">Object</span>] &#125;,</span><br></pre></td></tr></table></figure></p>
+<p>所以，我们可以通过这样做从这里检索一个套接字<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">io.eio.clients[socketid].emit();</span><br></pre></td></tr></table></figure></p>
+<p>另外，在发动机下，<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">engine:</span><br><span class="line"> &#123; <span class="attr">clients</span>:</span><br><span class="line">    &#123; <span class="attr">B5AC9w0sYmOGWe4fAAAA</span>: [<span class="built_in">Object</span>],</span><br><span class="line">      <span class="string">'hWzf97fmU-TIwwzWAAAB'</span>: [<span class="built_in">Object</span>] &#125;,</span><br></pre></td></tr></table></figure></p>
+<p>所以我们也可以写，<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">io.engine.clients[socketid].emit();</span><br></pre></td></tr></table></figure></p>
+<p>所以，我想我们可以通过上面列出的三种方式来实现我们的目标，</p>
+<ol>
+<li>io.sockets.connected [socketid] .emit();要么</li>
+<li>io.eio.clients [socketid] .emit();要么</li>
+<li>io.engine.clients [socketid] .emit();<h1 id="第八种方案"><a href="#第八种方案" class="headerlink" title="第八种方案"></a>第八种方案</h1>从版本1.4.5开始，请确保在io.to()中提供了一个正确的前缀socketId。我正在使用客户端记录的socketId进行调试，它没有前缀，所以我最终搜索永远，直到我发现！所以你可能要这样做，如果你的Id没有前缀：<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">io.to(<span class="string">'/#'</span> + socketId).emit(<span class="string">'myevent'</span>, &#123;<span class="attr">foo</span>: <span class="string">'bar'</span>&#125;);</span><br></pre></td></tr></table></figure></li>
+</ol>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/前端框架/" rel="tag"># 前端框架</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/08/28/前端/前端框架/socket.io+express实现聊天室的思考3/" rel="next" title="socket.io+express实现聊天室的思考（三）">
+                <i class="fa fa-chevron-left"></i> socket.io+express实现聊天室的思考（三）
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/10/19/计算机语言/C++/STL_unordered_map/" rel="prev" title="【C++】STL之unordered_map">
+                【C++】STL之unordered_map <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image" src="/images/avatar.jpg" alt="Helen">
+          <p class="site-author-name" itemprop="name">Helen</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">28</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">19</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/HelenHai" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#问题描述"><span class="nav-number">1.</span> <span class="nav-text">问题描述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#次佳解决方案"><span class="nav-number">2.</span> <span class="nav-text">次佳解决方案</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#第三种解决方案"><span class="nav-number">3.</span> <span class="nav-text">第三种解决方案</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#server"><span class="nav-number">3.1.</span> <span class="nav-text">server</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#client"><span class="nav-number">3.2.</span> <span class="nav-text">client</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#如何运行"><span class="nav-number">3.3.</span> <span class="nav-text">如何运行</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#第四种方案"><span class="nav-number">4.</span> <span class="nav-text">第四种方案</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#第五种方案"><span class="nav-number">5.</span> <span class="nav-text">第五种方案</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#第六种方案"><span class="nav-number">6.</span> <span class="nav-text">第六种方案</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#第七种方案"><span class="nav-number">7.</span> <span class="nav-text">第七种方案</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#第八种方案"><span class="nav-number">8.</span> <span class="nav-text">第八种方案</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Helen</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+  
+  <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("gvJTGu13470XEVyjJF3tToux-gzGzoHsz", "IpXgrLXSKH5FHXACCHHDvaht");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -115,7 +115,7 @@
 <meta property="og:description" content="吐槽篇（请无视）感觉ES6的很多特性还没有熟悉，ES8就已经风风火火的来了。最近一直用sf写文章就懒得发到博客上。不过简单一点的记录还是写在博客上比较好，专栏还是有点正式，在博客上还能瞎扯2333无语了=.=这两天重装系统啥都没了，找了半天 GitShell 才反应过来。最气的是有几个很久之前的本地仓库丢了…因为里面新的内容还没更新上去，要被气吐血… 实验室的网半小时屏一次我的 vps 每次搜索简">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/2017/09/04/计算机语言/JavaScript/002_ES8_共享内存和原子操作/002_es8/shareArrayBuffer.png">
-<meta property="og:updated_time" content="2019-10-19T10:52:16.210Z">
+<meta property="og:updated_time" content="2019-10-21T09:24:32.180Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="ES8 —— 共享内存和原子操作">
 <meta name="twitter:description" content="吐槽篇（请无视）感觉ES6的很多特性还没有熟悉，ES8就已经风风火火的来了。最近一直用sf写文章就懒得发到博客上。不过简单一点的记录还是写在博客上比较好，专栏还是有点正式，在博客上还能瞎扯2333无语了=.=这两天重装系统啥都没了，找了半天 GitShell 才反应过来。最气的是有几个很久之前的本地仓库丢了…因为里面新的内容还没更新上去，要被气吐血… 实验室的网半小时屏一次我的 vps 每次搜索简">
@@ -391,9 +391,8 @@
       
         <h1 id="吐槽篇（请无视）"><a href="#吐槽篇（请无视）" class="headerlink" title="吐槽篇（请无视）"></a>吐槽篇（请无视）</h1><p>感觉ES6的很多特性还没有熟悉，ES8就已经风风火火的来了。最近一直用sf写文章就懒得发到博客上。不过简单一点的记录还是写在博客上比较好，专栏还是有点正式，在博客上还能瞎扯2333<br>无语了=.=这两天重装系统啥都没了，找了半天 GitShell 才反应过来。最气的是有几个很久之前的本地仓库丢了…因为里面新的内容还没更新上去，要被气吐血… 实验室的网半小时屏一次我的 vps 每次搜索简直要疯掉，然后又是各种折腾，浏览器从每半天检验人机变成了每搜索一次就检验=.= 还有就是摄像头依然没好。我… 不就是调用了个API嘛，手动微笑脸<br>=================== 吐槽完毕 =========================</p>
 <p>言归正传，这篇文章主要是记录下ES8的共享内存和原子操作</p>
-<p>#共享内存和原子操作</p>
-<p>##共享内存<br>是允许两个不相关的进程访问同一个逻辑内存。不同进程之间共享的内存通常安排为同一段物理内存。进程可将同一段共享内存连接到它自己的地址空间中，所有进程都可以访问共享内存中的地址，就好像它们是由用C语言函数malloc分配的内存一样。而如果某个进程向共享内存写入数据，所做的改动将立即影响到可以访问同一段共享内存的任何其他进程。</p>
-<p>##原子操作<br>原子（atom）本意是“不能被进一步分割的最小粒子”，谓原子操作是指不会被线程调度机制打断的操作；这种操作一旦开始，就一直运行到结束，中间不会有任何 context switch （ 换到另一个线程）。</p>
+<h1 id="共享内存和原子操作"><a href="#共享内存和原子操作" class="headerlink" title="共享内存和原子操作"></a>共享内存和原子操作</h1><p>##共享内存<br>是允许两个不相关的进程访问同一个逻辑内存。不同进程之间共享的内存通常安排为同一段物理内存。进程可将同一段共享内存连接到它自己的地址空间中，所有进程都可以访问共享内存中的地址，就好像它们是由用C语言函数malloc分配的内存一样。而如果某个进程向共享内存写入数据，所做的改动将立即影响到可以访问同一段共享内存的任何其他进程。</p>
+<h2 id="原子操作"><a href="#原子操作" class="headerlink" title="原子操作"></a>原子操作</h2><p>原子（atom）本意是“不能被进一步分割的最小粒子”，谓原子操作是指不会被线程调度机制打断的操作；这种操作一旦开始，就一直运行到结束，中间不会有任何 context switch （ 换到另一个线程）。</p>
 <p>js是单线程的但运行环境（浏览器）是多线程，不过js为解决并行问题采用的是 <strong>eventloop-worker</strong>模式，js VM碰到文件、网络I/O之类的并发执行的任务时，会开启一个worker去实际执行，当worker执行结束后，把事件放到主队列中。<br>后面引也就入了webWorker标准，但是问题总是相对的，webWorkerde 引入解决了单线程的问题耗时长，失去响应的问题但是导致了大量数据的开销，所以：</p>
 <p>ES8中引入了一种新的 <strong>共享内存的类型 ： SharedArrayBuffer</strong>,和ES6中的ArrayBuffer很像（虽然我没在实际开发中用到=.=）两者最大的区别是：SharedArrayBuffer对应的内存可以被多个代理者同时引用（代理者可以是网页的主程序，也可以是其中一个 web worker）。使用PostMessage在两个代理者之间传递SharedArrayBuffer就会触发共享。举个例子：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> sab  = <span class="keyword">new</span> SharedArrayBuffer(<span class="number">1024</span>)</span><br><span class="line"><span class="keyword">let</span> woker = <span class="keyword">new</span> Woker(<span class="string">"..."</span>)</span><br><span class="line">woker.postMessage(sab,[sab])    <span class="comment">//传递buffer</span></span><br></pre></td></tr></table></figure></p>
 <p>Worker 会通过消息收到被共享的数据：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> mem</span><br><span class="line">onmessage = <span class="function"><span class="keyword">function</span> (<span class="params">ev</span>) </span>&#123; mem = ev.data; &#125;</span><br></pre></td></tr></table></figure></p>
@@ -528,7 +527,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">23</span>
+                <span class="site-state-item-count">28</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -550,7 +549,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">18</span>
+                <span class="site-state-item-count">19</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
@@ -596,7 +595,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#吐槽篇（请无视）"><span class="nav-number">1.</span> <span class="nav-text">吐槽篇（请无视）</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#吐槽篇（请无视）"><span class="nav-number">1.</span> <span class="nav-text">吐槽篇（请无视）</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#共享内存和原子操作"><span class="nav-number">2.</span> <span class="nav-text">共享内存和原子操作</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#原子操作"><span class="nav-number">2.1.</span> <span class="nav-text">原子操作</span></a></li></ol></li></ol></div>
             
 
           </div>

@@ -4,7 +4,7 @@ title: C++ 文件输入输出
 date: 2017-05-24 10:01:03
 tags:
       - grammer 
-categories: C++
+categories: 计算机语言
 ---
 ## 摘要 ##
 <!--**<p style="color:#15A05D;display：block"></p>**-->

@@ -511,7 +511,7 @@ fancybox: true
 # --------------------------------------------------------------------
 # NexT主题自带两种背景动画效果
 # Canvas-nest
-canvas_nest: false
+canvas_nest: true
 
 # three_waves
 three_waves: false

@@ -3,7 +3,7 @@ layout: pages
 title: 【C++】STL之unordered_map
 tags:
       - grammer 
-categories: C++
+categories: 计算机语言
 ---
 ## 前言 ##
 今天在刷题的时候遇到关于哈希的解题方法，所在在此特别记录一下。

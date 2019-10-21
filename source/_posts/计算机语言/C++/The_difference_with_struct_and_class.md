@@ -4,7 +4,7 @@ title: 【C++】结构体struct和类class区别
 date: 2017-07-7 10:02:03
 tags:
       - grammer 
-categories: C++
+categories: 计算机语言
 ---
 ## 前言 ##
 学习数据结构时经常会遇到 `struct` 结构体，今天详细了解一下在C++中结构体和类到底有什么异同

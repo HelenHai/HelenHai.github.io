@@ -3,7 +3,7 @@ title:  Vue学习笔记（三）—— 单页应用
 date: 2017-07-25 10:10:28
 tags: 
       - Vue
-categories: Vue
+categories: 前端
 ---
 
 ## 前言 ##

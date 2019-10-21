@@ -4,7 +4,7 @@ title: 浏览器工作原理
 date: 2017-05-26 22:04:03
 tags:
       - browser 
-categories: front-end
+categories: 前端
 ---
 ## 摘要 ##
 <!--**<p style="color:#15A05D;display：block"></p>**-->

@@ -5,7 +5,7 @@ date: 2017-05-29 10:38:03
 tags:
       - javascirpt 
       - 原型、原型链
-categories: javascript
+categories: 计算机语言
 ---
 ## 摘要 ##
 <!--**<p style="color:#15A05D;display：block"></p>**-->

@@ -5,7 +5,7 @@ date: 2017-05-15 14:29:37
 tags: 
       - Web调试工具
       - 开发者工具
-categories: 工具使用
+categories: 工具
 ---
 ## 摘要 ##
 **<p style="color:#15A05D;display：block">chorme开发者工具是一套内置于Google Chrome中的Web开发和调试工具，可用来对网站进行迭代、调试和分析。本文将纤细讲述网络面板，通过使用网络面板了解请求和下载的资源文件并优化网页加载性能</p>**

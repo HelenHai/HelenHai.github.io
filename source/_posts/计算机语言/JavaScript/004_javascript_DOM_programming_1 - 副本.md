@@ -6,7 +6,7 @@ tags:
       - javascirpt 
       - DOM
       - Node节点
-categories: javascript
+categories: 计算机语言
 ---
 ## 摘要 ##
 <!--**<p style="color:#15A05D;display：block"></p>**-->
